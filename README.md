@@ -9,7 +9,7 @@ An Agent Skill for AI coding agents to batch plan and execute tasks.
 - Parallel implementation plan generation (Subagents)
 - Parallel implementation based on plans (Subagents)
 - Automatic dependency analysis and task dispatching
-- Human-in-the-loop review process
+- Free human review
 - Adaptive to requirement changes
 - Archiving of original and revised plan versions
 
