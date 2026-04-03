@@ -1,21 +1,4 @@
-# Autonomous Execute Mode
-
-Use this document only after the user explicitly starts execution in the current turn.
-
-Do not infer execution permission from review approval, `LGTM`, `OK`, `继续`, or other non-execution acknowledgements.
-
-## Execution Gate
-
-Execution is allowed only when the user explicitly asks to start implementation, for example:
-
-- `开始执行`
-- `按这个方案实现`
-- `去改代码`
-- `直接落地`
-- `implement now`
-- `apply the plan`
-
-If the signal is weaker than that, stay in planning behavior.
+# Execute Mode
 
 ## Inputs
 

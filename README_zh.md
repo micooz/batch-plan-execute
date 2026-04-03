@@ -51,7 +51,7 @@ npx skills add micooz/batch-plan-execute
 1. (Human) 编写需求文档，比如：`requirements.md`：
 
 ```md
-# 2026-04-01 迭代
+# 2026-04-02 迭代
 
 ## Bugfix
 
@@ -96,14 +96,16 @@ $batch-plan-execute path/to/requirements.md
 +    │   ├── conversation-panel-unification.md
 +    │   ├── ui-polish-and-sse-guardrails.md
 +    │   └── sqlite-prisma-foundation.md
++    ├── checklist.md
      └── requirements.md
 ```
 
 > Tips: AI 会根据需求自动分析功能依赖关系并拆好模块。
+> Tips: `checklist.md` 汇总原始需求与最新评审意见，作为最终的验收/核对清单。
 
 3. (Human) 评审 `plans/` 下生成的计划文档
 
-在计划文档（如 `plans/some-feature.md`）的任意位置插入注释 `<!-- xxx -->` 块批注。
+在计划文档的任意位置插入注释 `<!-- xxx -->` 块批注。
 
 > Tips: 如果已经存在 AI 修订版本（xxx.rev-n.md），请在最新修订版本中评审。
 
@@ -128,6 +130,7 @@ AI 自动修订后产出：
      │   ├── ui-polish-and-sse-guardrails.md
 +    │   ├── ui-polish-and-sse-guardrails.rev-1.md
      │   └── sqlite-prisma-foundation.md
+     ├── checklist.md
      └── requirements.md
 ```
 
@@ -157,7 +160,14 @@ $batch-plan-execute path/to/requirements.md 开始执行
 
 6. (Human) 验收结果
 
-根据你的需求自行验收。
+对照 `checklist.md` 验收每一个变更结果以确保 agent 完全执行了计划。
+
+```md
+- [x] bugfix
+- [] feature 1
+```
+
+> Tips: 可要求 agent 参考这份文件处理遗漏的需求点。
 
 ## 一些约定
 

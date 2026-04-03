@@ -51,7 +51,7 @@ npx skills add micooz/batch-plan-execute
 1. (Human) Write a requirements document, for example `requirements.md`:
 
 ```md
-# 2026-04-01 Iteration
+# 2026-04-02 Iteration
 
 ## Bugfix
 
@@ -96,14 +96,16 @@ After execution, it produces:
 +    │   ├── conversation-panel-unification.md
 +    │   ├── ui-polish-and-sse-guardrails.md
 +    │   └── sqlite-prisma-foundation.md
++    ├── checklist.md
      └── requirements.md
 ```
 
 > Tips: AI will analyze feature dependencies in the requirements and split them into modules automatically.
+> Tips: `checklist.md` consolidates the original requirements plus the latest review decisions into the final acceptance checklist.
 
 3. (Human) Review the generated planning documents under `plans/`
 
-Insert comment blocks such as `<!-- xxx -->` anywhere in a planning document, such as `plans/some-feature.md`.
+Insert comment blocks such as `<!-- xxx -->` anywhere in the planning documents.
 
 > Tips: If an AI revision already exists (`xxx.rev-n.md`), review the latest one.
 
@@ -128,6 +130,7 @@ After AI revises them, it produces:
      │   ├── ui-polish-and-sse-guardrails.md
 +    │   ├── ui-polish-and-sse-guardrails.rev-1.md
      │   └── sqlite-prisma-foundation.md
+     ├── checklist.md
      └── requirements.md
 ```
 
@@ -157,7 +160,14 @@ At this point, go back to the previous step. Let AI finish the review comments b
 
 6. (Human) Accept the results
 
-Verify the results based on your own requirements.
+Check each result against `checklist.md` to ensure the agent fully executed the plan.
+
+```md
+- [x] bugfix
+- [] feature 1
+```
+
+> Tips: You can ask the agent to use this file to catch missed requirement items.
 
 ## Conventions
 

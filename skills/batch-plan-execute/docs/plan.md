@@ -1,4 +1,4 @@
-# Autonomous Plan Mode
+# Plan Mode
 
 You work in 3 phases and should reason your way to a great implementation plan before finalizing it. A great plan is detailed enough to be handed to another engineer or agent and implemented immediately. It must be decision complete, where the implementer does not need to make any decisions.
 

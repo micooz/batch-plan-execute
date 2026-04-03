@@ -1,25 +1,24 @@
 ---
 name: batch-plan-execute
-description: Use when the user wants AI to turn a requirement text, requirement document, and existing reviewed plan files into dependency-ordered implementation plans and, only after an explicit execution command, implement those plans with subagents in parallel where safe and in sequence where required.
+description: Use when the user wants AI to turn a requirement text, requirement document, and existing reviewed plan files into dependency-ordered implementation plans, a consolidated `checklist.md`, and, only after an explicit execution command, implement those plans with subagents in parallel where safe and in sequence where required.
 ---
 
 # Batch Plan Execute
 
-Use this skill when the task is to create, revise, retire, execute, or inspect module plans based on a requirement source and the current `plans/` directory state.
+Use this skill when the task is to create, revise, retire, execute, or inspect module plans and the derived `checklist.md` based on a requirement source and the current `plans/` directory state.
 
-This skill has two explicit modes:
+This skill currently has these explicit modes:
 
-- `plan`: generate or revise implementation-ready plans
+- `plan`: generate or revise implementation-ready plans and refresh `checklist.md`
 - `execute`: implement already-reviewed plans
 
-Do not enter `execute` mode unless the user explicitly starts execution in the current turn.
-
-## What This Skill Does
+This skill can do the following things:
 
 - Accepts requirement text from chat, a requirement file such as `requirements.md`, or an existing plan file or `plans/` directory.
 - Reconstructs the current planning state from the latest requirement source, existing plan files, and a hidden state file.
 - Detects mixed changes per module: new requirements, changed requirements, removed requirements, and review notes.
 - Builds dependency-aware module or workstream plans that reflect parallelizable and serial work.
+- Generates a consolidated `checklist.md` from the latest requirement source plus authoritative review notes.
 - Executes approved plans with implementation subagents only after an explicit execution command from the user.
 
 ## Input Handling
@@ -38,17 +37,24 @@ Use these rules:
 - If a requirement file path is provided, read it directly and treat it as the latest requirement source.
 - If the input is raw chat text, treat the full user text as the latest requirement source.
 - If both a requirement source and a `plans/` directory are available, always use both.
-- Match the final plan language and the execution-progress language to the dominant language of the latest requirement source unless the user explicitly asks for translation.
 
 Fail immediately if any referenced file or directory does not exist or is not readable.
 
-## Execution Gate
+## Output Language
+
+Use these rules:
+
+- Match all user-visible output language to the dominant language of the latest requirement source.
+- If no requirement source exists, match the dominant language of the user's current-turn input.
+- If the user explicitly asks for translation or a specific output language, follow that instead.
+
+## Mode Selection
 
 Default to `plan` mode.
 
-Enter `execute` mode only when the user explicitly issues an execution command in the current turn.
+Switch to `execute` mode only when the user explicitly issues an execution command in the current turn.
 
-Examples that DO enter `execute` mode:
+Examples that DO resolve to `execute` mode:
 
 - `开始执行`
 - `按这个方案实现`
@@ -57,7 +63,7 @@ Examples that DO enter `execute` mode:
 - `implement now`
 - `apply the plan`
 
-Examples that DO NOT enter `execute` mode:
+Examples that DO NOT change mode from the default `plan` behavior:
 
 - `LGTM`
 - `OK`
@@ -90,6 +96,10 @@ Revision plan files use this format:
 
 - `<module-slug>.rev-<n>.md`
 
+The derived checklist file must be:
+
+- `checklist.md`
+
 The hidden state file must be:
 
 - `.batch-plan-state.json`
@@ -101,6 +111,10 @@ Use these naming rules:
 - `no-op` must not write a new plan file.
 - Do not overwrite an existing file silently.
 - Plan slugs should follow implementation ownership, not requirement heading text, when the two differ.
+- If the latest requirement source is a readable file, write `checklist.md` next to that requirement file instead of inside `plans/`.
+- If no readable requirement file exists, fall back to writing `checklist.md` inside the active `plans/` directory.
+- Always overwrite the resolved `checklist.md` path in place when it can be refreshed safely.
+- `checklist.md` is a derived snapshot, not a plan lineage artifact and not an execution target.
 
 ## State File
 
@@ -189,6 +203,24 @@ Use these rules:
 - Allow rename matching only for safe one-to-one matches on `body_hash_without_heading`.
 - If rename matching is ambiguous, do not guess.
 
+### Checklist Generation
+
+Generate or refresh `checklist.md` during every successful `plan` run.
+
+Use these rules:
+
+- Build the checklist from the latest requirement source plus authoritative review notes from the latest plan lineage.
+- Apply the same requirement preprocessing used for module extraction before deriving checklist items.
+- Treat review comments as authoritative when they conflict with the original requirement document.
+- Never preserve raw HTML comments in `checklist.md`; only preserve their resolved intent.
+- Organize checklist sections by dependency layer and module order, not by raw requirement heading order.
+- Use Markdown headings plus actionable unchecked items such as `- [ ] ...`.
+- Prefer verifiable implementation or acceptance outcomes, not narrative summaries.
+- If the latest requirement source is a readable file, write `checklist.md` next to that requirement file.
+- If no readable requirement file exists, write `checklist.md` inside the active `plans/` directory.
+- If the source is a plan file or `plans/` directory, resolve the latest readable requirement source from `plans/.batch-plan-state.json` before refreshing the checklist.
+- If a requirement source cannot be reconstructed safely, allow review-driven plan revisions to proceed but report that `checklist.md` could not be refreshed.
+
 ### Mixed-Mode Classification
 
 Determine action per module, not once for the whole run.
@@ -229,13 +261,12 @@ Use these rules:
 - Confirm one clear owner for each shared interface, schema, migration, or infrastructure change.
 - Order final module output according to dependency layers rather than requirement heading order.
 - State explicitly when a module is blocked by another module or can run in parallel after prerequisites.
+- Refresh `checklist.md` after module plans are assembled and before refreshing the state file.
 - Refresh `plans/.batch-plan-state.json` only after all affected modules are processed.
 
 ## Execute Mode
 
 Use [docs/execute.md](./docs/execute.md) as the detailed execution contract.
-
-Enter this mode only after the explicit execution gate is satisfied.
 
 ### Execution Preconditions
 
@@ -247,29 +278,13 @@ Fail immediately if any of these is true:
 - shared-change ownership is ambiguous
 - dependency cycles cannot be justified as a merged module
 
-### Execution Behavior
+### Execution Rules
 
-Use these rules:
+After the gate and preconditions are satisfied:
 
-- Execute the latest reviewed artifact for each selected module lineage.
-- Respect the dependency graph produced in plan mode or reconstruct it from the latest plan set before dispatch.
-- Use implementation subagents for code changes.
-- Give each implementation subagent a clear write scope and ownership boundary.
-- Do not let two implementation subagents own the same shared interface, schema, migration, or infrastructure change in the same layer.
-- Run implementation subagents in parallel only inside the same ready dependency layer.
-- Hold downstream layers until upstream validation succeeds.
-- Let failures surface. Do not add fallback logic unless the plan explicitly requires it.
-
-### Execution Verification
-
-The main agent owns final verification and integration.
-
-Use these rules:
-
-- Run the narrowest useful validation first, then broader repo checks if the change surface warrants it.
-- Prefer the repository's existing validation commands for the affected scope and the final integrated output.
-- Report failures with the exact blocking module or layer.
-- Do not mark execution complete while required validations are still failing.
+- use `docs/execute.md` for target resolution, grounding, worker dispatch, integration, verification, and completion
+- execute the latest reviewed artifact for each selected module lineage
+- respect the dependency graph produced in plan mode or reconstruct it from the latest plan set before dispatch
 
 ## Failure Rules
 
