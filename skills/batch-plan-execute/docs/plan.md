@@ -50,6 +50,82 @@ Once intent is stable, continue until the spec is decision complete: approach, i
 
 Do not leave implementation choices unresolved. If multiple viable approaches exist for a specific action, present them together inline under that action and mark one as recommended.
 
+## Module planning workflow
+
+Follow the shared semantic model and artifact contracts in `SKILL.md` for requirement preprocessing, requirement-item identity, module lineage, dependency layering, checklist paths, and state-file expectations.
+
+Within that shared contract, plan mode must:
+
+1. extract implementation-bearing modules from the latest requirement source
+2. derive dependency layering before classification or subagent spawning
+3. classify each module into exactly one action: `new-plan`, `revise-plan`, `obsolete-plan`, or `no-op`
+4. draft or revise the affected module plans
+5. refresh `checklist.md`
+6. refresh `plans/.state.json` after all affected modules are processed
+
+### Module extraction and classification
+
+Use these rules:
+
+- Default to splitting by implementation units and dependency boundaries, not by repository package structure and not mechanically by requirement headings.
+- If the source is plain text with no reliable headings, derive a concise module list from the requirement content and use feature boundaries, workflows, deliverables, prerequisite relationships, and requirement-item boundaries as extraction inputs.
+- Avoid generic module names like `misc`, `other`, or `supporting-work`.
+- If a new requirement item describes a new owner-level deliverable or dependency boundary, create a new module lineage for it.
+- If a new requirement item only adds constraints, acceptance detail, or incremental scope to an existing module lineage, revise that lineage instead of creating a second base module.
+- Removing a requirement item should produce `obsolete-plan` only when that item was the last active requirement item mapped to the module lineage; otherwise revise the surviving lineage.
+- When no requirement source is available, allow review-driven revisions only.
+- Comment-only edits in the requirement source must not trigger `revise-plan`.
+
+### Review note handling
+
+Treat review notes from the latest plan lineage as input constraints only.
+
+Use these rules:
+
+- Review detection is only meaningful inside `plans/*.md`.
+- Treat any HTML comment outside fenced code blocks in plan files as a review note.
+- If review content in user comments conflicts with the original requirement document, treat the review content as the latest authoritative instruction.
+- Do not preserve HTML comments in final plan output.
+- If the input material includes both requirement changes and review notes for the same module, merge both inputs into a single revised plan instead of producing multiple competing outputs.
+- If a module disappeared from the latest requirement source, the output plan should become a retirement-oriented or obsolete plan rather than silently skipping that module.
+
+### Checklist refresh
+
+Generate or refresh `checklist.md` during every successful `plan` run.
+
+Use these rules:
+
+- Build the checklist from the latest requirement source plus authoritative review notes from the latest plan lineage.
+- Organize checklist sections by dependency layer and module order, not by raw requirement heading order.
+- First regenerate the checklist content from current authoritative inputs, then optionally restore prior checked states from the previous `checklist.md` only for safely matched unchanged items.
+- Use Markdown headings plus actionable checklist items such as `- [] ...` or `- [x] ...`, with no space inside `[]`.
+- Prefer verifiable implementation or acceptance outcomes, not narrative summaries.
+- Preserve `[x]` only for safe one-to-one matches between old and new checklist items.
+- Prefer the strongest available identity match first, such as requirement item identity, module lineage, and normalized checklist text.
+- Treat pure reordering, heading movement, and non-semantic formatting-only rewrites as eligible for `[x]` preservation when the match is still safe and one-to-one.
+- Do not preserve `[x]` for items whose resolved acceptance intent changed, including authoritative review-driven rewrites, requirement scope changes, item splits, item merges, unsafe rename cases, or ambiguous matches.
+- If prior checklist content cannot be parsed safely, still refresh the new checklist and report that some or all prior checked states could not be preserved.
+- If the source is a plan file or `plans/` directory, resolve the latest readable requirement source from `plans/.state.json` before refreshing the checklist.
+- If a requirement source cannot be reconstructed safely, allow review-driven plan revisions to proceed but report that `checklist.md` could not be refreshed.
+
+### Planning subagents and assembly
+
+Spawn one planning subagent per affected module after locking the module list, dependency graph, and action.
+
+Use these rules:
+
+- Prefer read-only analysis subagents for planning work.
+- Use a general-purpose subagent only if a dedicated read-only analysis role is unavailable and the subagent can still stay read-only.
+- Planning subagents must not edit files.
+- Pass this document's requirements through in each planning subagent prompt and instruct the subagent to follow this contract for its module output.
+- Run planning subagents in parallel only within the same dependency layer.
+- Ask each planning subagent to return plain Markdown module-plan draft content that is implementation-ready under this contract.
+- Require each planning subagent draft to cover affected code areas, interfaces, dependencies, parallelism notes, risks, tests, and explicit assumptions.
+- Resolve cross-module dependencies so terminology and shared changes stay consistent.
+- Confirm one clear owner for each shared interface, schema, migration, or infrastructure change.
+- Order final module output according to dependency layers rather than requirement heading order.
+- State explicitly when a module is blocked by another module or can run in parallel after prerequisites.
+
 ## Unknowns and defaults
 
 Treat unknowns in two categories:
@@ -114,24 +190,3 @@ When revising an existing plan:
 - If the latest requirement source changed outside the annotated area, expand the rewrite only to the impacted section or related action group by default.
 
 Do not ask whether to proceed. If important preferences remain unknown, proceed with the recommended default and document it in Assumptions and Alternatives Considered.
-
-When parsing a requirement source, ignore HTML comments outside fenced code blocks before extracting requirements or computing requirement-derived hashes. Commented requirement content must behave as if it does not exist.
-
-Requirement segmentation, including heading boundaries and standalone `---`-delimited requirement items, is defined by `SKILL.md`. This document only defines how each resulting module plan should be written or revised.
-
-## Review note handling
-
-If the input material includes prior plan files with human review notes, treat those notes as input constraints only.
-
-Use these rules:
-
-- Review comments may appear as HTML comments.
-- HTML comments inside fenced code blocks are not review notes.
-- Do not preserve review comments in the final output.
-- The final output must remain plain Markdown plan content with no surrounding commentary, wrapper tags, or annotations.
-
-## Mixed change handling
-
-If the input material includes both requirement changes and review notes for the same module, merge both inputs into a single revised plan instead of producing multiple competing outputs.
-
-If a module disappeared from the latest requirement source, the output plan should become a retirement-oriented or obsolete plan rather than silently skipping that module.
