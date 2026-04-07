@@ -214,7 +214,7 @@ Use these rules:
 - Treat review comments as authoritative when they conflict with the original requirement document.
 - Never preserve raw HTML comments in `checklist.md`; only preserve their resolved intent.
 - Organize checklist sections by dependency layer and module order, not by raw requirement heading order.
-- Use Markdown headings plus actionable unchecked items such as `- [ ] ...`.
+- Use Markdown headings plus actionable unchecked items such as `- [] ...`, no space inside of `[]`.
 - Prefer verifiable implementation or acceptance outcomes, not narrative summaries.
 - If the latest requirement source is a readable file, write `checklist.md` next to that requirement file.
 - If no readable requirement file exists, write `checklist.md` inside the active `plans/` directory.
