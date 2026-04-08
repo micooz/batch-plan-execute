@@ -102,9 +102,10 @@ Use these rules:
 Use these rules:
 
 - Treat each standalone `---`-delimited body segment as a distinct requirement item candidate before module mapping.
-- Start from requirement sections and `---`-delimited requirement items only as extraction aids, not as final module boundaries.
-- A new standalone `---`-delimited requirement segment must produce a new requirement item identity even when it is later merged into an existing module lineage.
-- Requirement item state must preserve extraction-time identity before any later module merge, including `item_id`, `source_kind`, `source_order`, `source_excerpt_hash`, `body_hash_without_comments`, and `mapped_module_slug`.
+- Treat each standalone `---`-delimited body segment as a new planning batch boundary, not merely as an extraction aid.
+- A new standalone `---`-delimited requirement segment must produce a new requirement item identity and a new plan lineage, even when its implementation area overlaps with an earlier module.
+- Do not merge a requirement item extracted from a later `---` segment back into an earlier plan lineage.
+- Requirement item state must preserve extraction-time identity, including `item_id`, `source_kind`, `source_order`, `source_excerpt_hash`, `body_hash_without_comments`, `mapped_module_slug`, and `planning_batch_id`.
 - Meta sections such as background, goals, scope, non-goals, assumptions, rollout, acceptance criteria, and non-functional requirements are global constraints unless they clearly describe implementation-bearing work.
 
 ### Module Lineage And Ownership
@@ -161,8 +162,9 @@ Use these naming rules:
 - `revise-plan` and `obsolete-plan` must always write a new `rev` file.
 - `no-op` must not write a new plan file.
 - Do not overwrite an existing file silently.
-- A new standalone `---`-delimited requirement segment may create a new base file only when it resolves to a new module lineage rather than a revision of an existing lineage.
-- If a new `---`-delimited requirement segment only expands an existing module lineage, write a new `rev` file for that lineage instead of creating a second base file.
+- A new standalone `---`-delimited requirement segment must create a new base file and a new plan lineage.
+- Do not route a later `---`-delimited requirement segment into an earlier lineage, even if it touches the same implementation area or extends the same feature family.
+- Revisions apply only within the lineage created from that specific requirement segment after its base file exists.
 - Slugs derived from `---`-delimited requirement segments must still describe the implementation owner-level deliverable, not the raw segment order or divider label.
 
 ### Checklist Contract

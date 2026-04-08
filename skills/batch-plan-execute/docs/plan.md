@@ -70,8 +70,7 @@ Use these rules:
 - Default to splitting by implementation units and dependency boundaries, not by repository package structure and not mechanically by requirement headings.
 - If the source is plain text with no reliable headings, derive a concise module list from the requirement content and use feature boundaries, workflows, deliverables, prerequisite relationships, and requirement-item boundaries as extraction inputs.
 - Avoid generic module names like `misc`, `other`, or `supporting-work`.
-- If a new requirement item describes a new owner-level deliverable or dependency boundary, create a new module lineage for it.
-- If a new requirement item only adds constraints, acceptance detail, or incremental scope to an existing module lineage, revise that lineage instead of creating a second base module.
+- For requirement items from later standalone `---` segments, follow the lineage rules in `SKILL.md` and classify them as `new-plan`, not `revise-plan`.
 - Removing a requirement item should produce `obsolete-plan` only when that item was the last active requirement item mapped to the module lineage; otherwise revise the surviving lineage.
 - When no requirement source is available, allow review-driven revisions only.
 - Comment-only edits in the requirement source must not trigger `revise-plan`.
